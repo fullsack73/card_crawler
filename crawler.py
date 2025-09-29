@@ -26,6 +26,8 @@ def init_driver():
 # ✅ "더보기" 버튼이 사라질 때까지 반복 클릭
 def click_all_more(driver):
     click_count = 0
+    last_card_count = 0
+    stagnant_clicks = 0
     while True:
         try:
             more_btn = WebDriverWait(driver, 3).until(
@@ -33,13 +35,25 @@ def click_all_more(driver):
             )
             driver.execute_script("arguments[0].click();", more_btn)
             click_count += 1
-            time.sleep(2)
+            time.sleep(1)
 
             # 현재 카드 개수 추적
             html = driver.page_source
             soup = BeautifulSoup(html, "html.parser")
             card_elems = soup.select("li[data-v-e6703b60] a")
-            print(f"[DEBUG] 더보기 {click_count}회 클릭 → 현재 {len(card_elems)}개 카드 로딩됨")
+            current_card_count = len(card_elems)
+            print(f"[DEBUG] 더보기 {click_count}회 클릭 → 현재 {current_card_count}개 카드 로딩됨")
+
+            if current_card_count == last_card_count:
+                stagnant_clicks += 1
+            else:
+                stagnant_clicks = 0
+
+            if stagnant_clicks >= 2:
+                print(f"[DEBUG] 카드 개수가 2회 연속 변경되지 않아 종료합니다.")
+                break
+
+            last_card_count = current_card_count
 
         except:
             print(f"[DEBUG] 더보기 버튼 없음 (총 {click_count}회 클릭 후 종료)")
@@ -72,7 +86,7 @@ def get_card_list(driver):
 def get_card_benefits(driver, url):
     try:
         driver.get(url)
-        time.sleep(2)
+        time.sleep(1)
 
         html = driver.page_source
         soup = BeautifulSoup(html, "html.parser")
